@@ -7,7 +7,8 @@ ARG GID=994
 #aggiunta utente jenkins al gruppo docker + modifica gid
 RUN groupadd -g $GID docker && usermod -aG docker jenkins
 
-RUN apt update && apt install -y ca-certificates curl gnupg
+## https://docs.docker.com/engine/install/debian/
+RUN apt update && apt install -y ca-certificates curl gnupg make
 RUN install -m 0755 -d /etc/apt/keyrings
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
 RUN chmod a+r /etc/apt/keyrings/docker.asc
