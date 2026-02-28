@@ -1,0 +1,44 @@
+# roles/docker_app/tasks/main.yml
+---
+- name: Ensure Docker Compose is available (sanity check)
+  ansible.builtin.command: "{{ docker_compose_command }} version"
+  register: docker_compose_version_check
+  changed_when: false
+  failed_when: docker_compose_version_check.rc != 0
+
+- name: Stop and remove existing Docker Compose services if running
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dest_path }}"
+    state: absent # Arresta e rimuove i container e le reti
+    remove_volumes: true #Aggiunto per evitare errori con le tabelle (all aggiunta di nuove colonne es quantity) che inizializzano i db con script init
+  ignore_errors: yes # Ignora errori se i servizi non sono ancora attivi
+  become: yes
+  become_user: "{{ app_owner_user }}"
+
+# #### Sostituzione di docker compose build con docker compose pull delle immagini dal dockerhub
+
+- name: Build Docker Compose services
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dest_path }}"
+    build: always # Forziamo la ricostruzione ogni volta per coerenza
+  become: yes
+  become_user: "{{ app_owner_user }}"
+
+# - name: Pull latest Docker images from Docker Hub
+#   community.docker.docker_compose_v2:
+#     project_src: "{{ app_dest_path }}"
+#     pull: always  # Forza il pull delle immagini più recenti
+#   become: yes
+#   become_user: "{{ app_owner_user }}"
+
+- name: Start Docker Compose services
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dest_path }}"
+    state: present # Assicura che i servizi siano su
+  become: yes
+  become_user: "{{ app_owner_user }}"
+  register: docker_compose_start_result
+
+- name: Display Docker Compose status
+  ansible.builtin.debug:
+    msg: "Docker Compose services started. Status: {{ docker_compose_start_result }}"

@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ALTER COLUMN "total_price" SET NOT NULL;

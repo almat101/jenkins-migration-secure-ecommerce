@@ -1,0 +1,59 @@
+# playbooks/deploy.yml
+# Run this playbook to deploy to the current hosts.
+# 
+# Usage:
+#   ansible-playbook playbooks/deploy.yml --ask-vault-pass
+#
+# - You will be prompted for the Ansible Vault password to decrypt secrets.
+# - The deployment will target the hosts in the [ec2_hosts] group defined in your inventory/hosts.ini file.
+# - The roles base_setup, app_code, app_config, and docker_app will be applied in order.
+# - Make sure your SSH key is configured on this machine (e.g., ~/.ssh/ec2_ubuntu.pem).
+#
+# About the 'hosts' directive:
+#   The 'hosts' field specifies which group of servers (from your inventory) this playbook will run on.
+#   In this case, 'ec2_hosts' should match a group in your inventory/hosts.ini file, typically representing your AWS EC2 instances.
+#   Example inventory entry:
+#     [ec2_hosts]
+#     ec2_instance ansible_host=your-ec2-public-dns ansible_user=ubuntu
+#
+# This playbook will:
+#   - Prepare the server with Docker and required users
+#   - Deploy your application code from Git
+#   - Configure environment and secrets
+#   - Build and start Docker Compose services
+---
+- name: Deploy mini_crud application
+
+  hosts: hetzner_instance
+  become: yes
+  gather_facts: yes
+
+  # Includi il file di variabili sensibili criptato con Ansible Vault.
+  # Le variabili definite in questo file saranno disponibili per tutte le task e i ruoli in questo play.
+  vars_files:
+    - ../vars/secrets.yml # Assicurati che questo percorso sia relativo alla root del tuo progetto Ansible
+
+  # Definizione delle variabili comuni.
+  # Queste variabili saranno disponibili per tutti i ruoli chiamati.
+  # Idealmente, molte di queste potrebbero essere definite in inventory/group_vars/all.yml
+  # per una migliore gestione a livello di ambiente.
+
+
+  # Lista dei ruoli da eseguire in sequenza.
+  # Ansible eseguirà le task di ogni ruolo nell'ordine specificato.
+  roles:
+    # Ruolo 1: Configurazione di base del sistema e installazione dei prerequisiti.
+    # Include l'installazione di Docker, la configurazione degli utenti e la creazione della directory base.
+    - base_setup
+
+    # Ruolo 2: Gestione del codice dell'applicazione.
+    # Clona o aggiorna la repository Git dell'applicazione nel percorso di destinazione.
+    - app_code
+
+    # Ruolo 3: Deployment dei file di configurazione dell'applicazione.
+    # Inserisce il file .env (popolato con le variabili, incluse quelle sensibili dal Vault).
+    - app_config
+
+    # Ruolo 4: Gestione del ciclo di vita dell'applicazione Docker.
+    # Include la fase di build delle immagini Docker locali e l'avvio dei servizi Docker Compose.
+    - docker_app

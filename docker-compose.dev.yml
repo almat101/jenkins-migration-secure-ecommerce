@@ -1,0 +1,200 @@
+services:
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend
+    #dockerfile specifico per modalita sviluppo locale
+    #sovrascrive il comando del dockerfile
+    command: npm run start
+    env_file: ".env.dev"
+    ports:
+      - 3000:3000
+    volumes:
+    - ./frontend:/app # uso il volume app per avere l hot reload
+    - /app/node_modules # Evita di sovrascrivere i moduli node
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      products-service:
+        condition: service_healthy
+      orders-service:
+        condition: service_healthy
+    networks:
+      - crud-app
+
+  auth-service:
+    build: ./backend/auth-service
+    container_name: auth-service
+    #sovrascrive il comando del dockerfile
+    command: npm run dev
+    env_file: ".env.dev"
+    ports:
+      - 3030:3030
+    volumes:
+    - ./backend/auth-service:/app
+    - /app/node_modules # Evita di sovrascrivere i moduli node
+    restart: unless-stopped
+    depends_on:
+      db_auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3030/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - crud-app
+
+  products-service:
+    build: ./backend/products-service
+    container_name: products-service
+       #sovrascrive il comando del dockerfile
+    command: npm run dev
+    env_file: ".env.dev"
+    ports:
+      - 3020:3020
+    volumes:
+    - ./backend/products-service:/app # Monta il codice sorgente
+    - /app/node_modules # Evita di sovrascrivere i moduli node
+    restart: unless-stopped
+    depends_on:
+      db_products:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3020/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - crud-app
+  
+  orders-service:
+    build: ./backend/orders-service
+    container_name: orders-service
+        #sovrascrive il comando del dockerfile
+    command: sh -c "npm run drizzle:generate && npm run drizzle:migrate && npm run dev"
+    env_file: ".env.dev"
+    ports:
+      - 3040:3040
+    volumes:
+    - ./backend/orders-service:/app # Monta il codice sorgente
+    - /app/node_modules # Evita di sovrascrivere i moduli node
+    restart: unless-stopped
+    depends_on:
+      db_orders:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3040/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - crud-app
+
+  db_auth:
+    image: postgres:17-alpine3.22
+    container_name: db_auth
+    restart: always
+    env_file: ".env.dev"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_AUTH}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_AUTH}
+      - POSTGRES_DB=${POSTGRES_DB_AUTH}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+      - ./backend/auth-service/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - crud-app
+
+  db_products:
+    image: postgres:17-alpine3.22
+    container_name: db_products
+    restart: always
+    env_file: ".env.dev"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_PRODUCTS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_PRODUCTS}
+      - POSTGRES_DB=${POSTGRES_DB_PRODUCTS}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_products_data:/var/lib/postgresql/data
+      - ./backend/products-service/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s 
+    networks:
+      - crud-app
+
+  db_orders:
+    image: postgres:17-alpine3.22
+    container_name: db_orders
+    restart: always
+    env_file: ".env.dev"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_ORDERS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ORDERS}
+      - POSTGRES_DB=${POSTGRES_DB_ORDERS}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
+      - ./backend/orders-service/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s 
+    networks:
+      - crud-app
+
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - crud-app
+
+volumes:
+  postgres_auth_data:
+  postgres_products_data:
+  postgres_orders_data:
+  redis_data:
+
+networks:
+  crud-app:
+    driver: bridge

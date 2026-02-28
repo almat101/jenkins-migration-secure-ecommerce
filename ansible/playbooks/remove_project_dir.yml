@@ -1,0 +1,24 @@
+---
+  - name: Remove project folder
+    hosts: hetzner_instance
+    become: yes
+    tasks:
+      - name: print app_dest_path
+        debug:
+          msg : |
+            app_dest_path: {{ app_dest_path }}
+
+      - name: Check existence of project folder
+        ansible.builtin.stat:
+          path: "{{ app_dest_path }}"
+        register: p
+
+      - name: print if is_dir
+        debug:
+          msg: "{{ app_dest_path }} exists and is a directory"
+        when: p.stat.exists and p.stat.isdir
+
+      - name: Recursively remove directory
+        ansible.builtin.file:
+          path: "{{ app_dest_path}}"
+          state: absent

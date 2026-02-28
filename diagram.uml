@@ -1,0 +1,26 @@
+@startuml
+package "crud-pipeline-app" {
+    package "CRUD" {
+        node "frontend(react app + Nginx)" as frontend
+        node "auth-service" as auth
+        node "products-service" as products
+        node "db_auth" as db_auth
+        node "db_products" as db_products
+    }
+
+    package "Docker Compose" {
+        artifact "docker-compose.yml" as compose
+    }
+
+    cloud "internet" as internet
+
+    internet --> frontend :  HTTP
+    frontend --> auth : HTTP\n/auth/signup, /auth/login\n(JWT)
+    frontend --> products : HTTP\n/api/products\n(JWT)
+ 
+    auth --> db_auth : PostgreSQL
+    products --> db_products : PostgreSQL
+
+}
+
+@enduml
