@@ -25,10 +25,18 @@ infra:
 down-infra:
 	docker compose -f docker-compose.jenkins-infra.yml down
 
+auth-unit:
+	@echo 'Running unit test for auth-service...'
+	cd backend/auth-service && npm install && npm run test:unit
+
+auth-integration:
+	@echo 'running integration test for auth-service...'
+	cd backend/auth-service && npm install && npm run test:integration
+
 prune:
 	docker system prune -af --volumes
 
-.PHONY: all dev down down-dev fclean infra down-infra prune
+.PHONY: all dev down down-dev fclean infra down-infra prune auth-unit auth-integration
 
 
 
