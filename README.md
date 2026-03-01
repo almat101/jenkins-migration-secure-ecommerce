@@ -184,6 +184,7 @@ pipeline {
    - Inserisci l’URL SSH del repository (es: `git@github.com:almat101/jenkins-migration-secure-ecommerce.git`)
    - Seleziona la credenziale SSH appena creata.
 
-Così Jenkins potrà accedere al repository via SSH in modo sicuro e automatico.
+**Nota pratica:**
+La chiave privata SSH va inserita solo tramite l’interfaccia web di Jenkins (Gestione credenziali) e non deve essere salvata nel filesystem del container Jenkins. La chiave host di GitHub (ED25519) invece deve essere presente nel file `/var/jenkins_home/.ssh/known_hosts` del container Jenkins: questa serve per la verifica della connessione SSH e va aggiunta manualmente con `ssh-keyscan`. Il test manuale con `ssh -i ...` non è rilevante per Jenkins, che gestisce le chiavi in modo diverso. Se la pipeline fallisce per "Host key verification failed", controlla solo il file `known_hosts` e i permessi, non la chiave privata.
 
-Per ulteriori dettagli sull'architettura, consultare il file `ARCHITECTURE.md`.
+Così Jenkins potrà accedere al repository via SSH in modo sicuro e automatico.
