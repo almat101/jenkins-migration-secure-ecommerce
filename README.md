@@ -202,6 +202,16 @@ Per far sì che ogni push su GitHub triggeri automaticamente la pipeline Jenkins
 
 Assicurati che il job Jenkins abbia abilitato il trigger “GitHub hook trigger for GITScm polling” nelle opzioni di build. Così ogni push su GitHub notificherà Jenkins e la pipeline verrà eseguita automaticamente.
 
+**Come abilitare il trigger webhook su Jenkins:**
+1. Apri il job Jenkins che gestisce la pipeline (collegato al repository via SCM).
+2. Clicca su "Configura" (Configure).
+3. Nella sezione "Build Triggers", seleziona la casella:
+    - “GitHub hook trigger for GITScm polling”
+
+Questa opzione permette a Jenkins di ricevere notifiche dai webhook GitHub e avviare la pipeline automaticamente ad ogni push.
+
+Se usi Jenkinsfile e "Pipeline script from SCM", la configurazione va fatta nell’interfaccia web del job, non nel Jenkinsfile.
+
 ### Come configurare la regola di bypass Cloudflare Access per il webhook
 
 Usando Cloudflare Access per proteggere Jenkins, dovrai creare una regola di bypass che permetta a GitHub di accedere all’endpoint `/github-webhook/` senza autenticazione, altrimenti il webhook non funzionerà.
