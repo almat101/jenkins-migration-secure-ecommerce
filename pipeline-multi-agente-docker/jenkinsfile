@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    
+    stages {
+        // Rimosso perché la pipeline viene collegata tramite interfaccia web all'inizio con 'Pipeline from SCM' 
+        // Prima creerò una pipeline tramite l'interfaccia web e la collegherò via SSH. Successivamente passerò all'utilizzo della pipeline "Pipeline from SCM", che collegherò allo stesso modo. Aver fatto prima la configurazione manuale renderà più semplice il passaggio.
+        //     steps {
+        //         echo 'Checking out code...'
+        //         git branch: 'main', url: 'https://github.com/almat101/jenkins-migration-secure-ecommerce.git'
+        //     }
+        // }
+        
+        stage('Unit test') {
+            agent { 
+                docker { image 'node:24-alpine' }
+            }
+            steps {
+                echo 'Checkout in every agent...'
+                checkout scm
+                echo 'Running unit test...'
+                sh 'ls -l'
+                sh 'cd backend/auth-service && npm install && npm run test:unit'
+            }
+        }
+        
+        stage('build') {
+            agent {
+                docker { image 'docker/compose:alpine-1.29.2' }
+                // docker { image 'docker/compose:debian-1.29.2' }
+            }
+            steps {
+                echo 'Checkout in every agent...'
+                checkout scm
+                echo 'Checking compose version...'
+                sh 'docker compose version'
+                echo 'Building application...'
+                sh 'docker compose build'
+            }
+        }
+        
+        stage('integration test') {
+            agent {
+                docker { image 'node:24-alpine' }
+            }
+            steps {
+                echo 'Checkout in every agent...'
+                checkout scm
+                echo 'Running integration test...'
+                sh 'cd backend/auth-service && npm install && npm run test:unit'
+            }
+        }
+    }
+}

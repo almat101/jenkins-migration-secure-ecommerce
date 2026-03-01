@@ -68,8 +68,122 @@ Esempi dei passaggi di autenticazione Cloudflare:
 
 ---
 
+## Jenkins controller (master) e agenti (worker)
 
+In Jenkins, l'architettura classica prevede un **controller** (precedentemente chiamato "master") e uno o più **agenti** (detti anche "worker", in passato "slave").
+
+- Il **controller** gestisce l'orchestrazione delle pipeline, la UI, la configurazione dei job e la distribuzione dei task agli agenti( nel mio caso puo essere il mio pc o la mia vps hetzner)
+- Gli **agenti** sono macchine (VM, server, container) che eseguono fisicamente i job e le build. Possono essere configurati per eseguire job specifici, avere tool diversi installati, e scalare in base alle necessità.
+
+La terminologia moderna preferisce "controller" e "agent" (o "worker") invece di "master/slave" per motivi di inclusività. In pratica, il controller decide dove e come eseguire i job, mentre gli agenti sono gli esecutori reali delle pipeline.
 
 ---
+## Esempio di Pipeline Jenkins ( via interfaccia web )
+
+Ho implementato la seguente pipeline tramite l’interfaccia web di Jenkins, successivamente convertibile in Jenkinsfile per una gestione più avanzata e versionata:
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('checkout') {
+            steps {
+                // Get some code from a GitHub repository
+                echo 'Checking out code...'
+                git branch: 'main', url: 'https://github.com/almat101/jenkins-migration-secure-ecommerce.git'
+            }
+        }
+        
+        stage('Unit test') {
+            steps {
+                echo 'Running unit test...'
+                sh 'make auth-unit'
+            }
+        }
+        
+        stage('build') {
+            steps {
+                echo 'Building application...'
+                sh 'make build'
+            }
+        }
+        
+        stage('integration test') {
+            steps {
+                echo 'Running integration test...'
+                sh 'make auth-integration'
+            }
+        }
+    }
+}
+```
+
+### Spiegazione della pipeline
+
+- **pipeline**: definisce la pipeline dichiarativa di Jenkins.
+- **agent any**: indica che la pipeline può essere eseguita su qualsiasi agente Jenkins disponibile. Attualmente, l'agente è la VPS su cui è installato Jenkins: questa macchina esegue fisicamente i comandi della pipeline. L'agente è l'esecutore della pipeline. In futuro, quando aggiungerai un agente EC2 (o altri agenti), Jenkins potrà eseguire la pipeline su quell'agente, sfruttando le sue risorse e il suo ambiente.
+- **stages**: contiene le diverse fasi della pipeline.
+    - **checkout**: recupera il codice dal repository GitHub.
+    - **Unit test**: esegue i test unitari tramite il comando `make auth-unit`.
+    - **build**: costruisce l’applicazione con `make build`.
+    - **integration test**: esegue i test di integrazione con `make auth-integration`.
+
+Questa struttura permette di gestire in modo ordinato e automatizzato le fasi principali del ciclo CI/CD, garantendo che ogni step venga eseguito solo se il precedente ha avuto successo.
+
+---
+
+## Pipeline semplice con SCM e collegamento via SSH
+
+Per una pipeline semplice gestita tramite "Pipeline from SCM", puoi usare questa struttura di Jenkinsfile:
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Unit test') {
+            steps {
+                echo 'Running unit test...'
+                sh 'make auth-unit'
+            }
+        }
+        stage('build') {
+            steps {
+                echo 'Building application...'
+                sh 'make build'
+            }
+        }
+        stage('integration test') {
+            steps {
+                echo 'Running integration test...'
+                sh 'make auth-integration'
+            }
+        }
+    }
+}
+```
+
+### Come collegare Jenkins al repository via SSH
+
+1. **Genera una coppia di chiavi SSH** sulla macchina dove gira Jenkins (per adesso il mio pc successivamente la VPS hetzner):
+   ```sh
+   ssh-keygen -t ed25519 -C "jenkins@yourdomain" -f ~/.ssh/jenkins-key
+   ```
+
+2. **Aggiungi la chiave pubblica** (`jenkins-key.pub`) come chiave deploy nel repository GitHub:
+   - Vai su GitHub → Settings → Deploy keys → Add key
+   - Incolla la chiave pubblica e dai i permessi di sola lettura o scrittura se serve push.
+
+3. **Configura la chiave privata** (`jenkins-key`) in Jenkins:
+   - Vai su Jenkins → Gestione credenziali → (global) → Aggiungi credenziale → Tipo: "SSH Username with private key"
+   - Username: `git` (per GitHub)
+   - Incolla la chiave privata.
+
+4. **Configura il job Jenkins**:
+   - Scegli "Pipeline script from SCM"
+   - Inserisci l’URL SSH del repository (es: `git@github.com:almat101/jenkins-migration-secure-ecommerce.git`)
+   - Seleziona la credenziale SSH appena creata.
+
+Così Jenkins potrà accedere al repository via SSH in modo sicuro e automatico.
 
 Per ulteriori dettagli sull'architettura, consultare il file `ARCHITECTURE.md`.

@@ -1,0 +1,23 @@
+pipeline {
+    agent any
+    stages {
+        stage('Unit test') {
+            steps {
+                echo 'Running unit test...'
+                sh 'make auth-unit'
+            }
+        }
+        stage('build') {
+            steps {
+                echo 'Building application...'
+                sh 'make build'
+            }
+        }
+        stage('integration test') {
+            steps {
+                echo 'Running integration test...'
+                sh 'make auth-integration'
+            }
+        }
+    }
+}
