@@ -26,7 +26,7 @@ services:
       - web_net
 
   auth-service:
-    image: ghcr.io/almat101/auth-service:${SHA}
+    image: ghcr.io/almat101/jenkins-migration-auth-service:${SHA}
     # build: 
     #   context: ./backend/auth-service
     #   dockerfile: Dockerfile

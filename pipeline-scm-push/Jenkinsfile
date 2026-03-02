@@ -3,6 +3,7 @@ pipeline {
     environment {
         CR_PAT = credentials('GHCR_TOKEN')
         GH_USER = 'almat101'
+        // jenkins-migration-auth-service
     }
     stages {
         stage('Checking SHA') {
@@ -13,7 +14,7 @@ pipeline {
         stage('build auth-service') {
             steps {
                 echo 'Building auth-service with tag(sha)...'
-                sh 'docker build -t ghcr.io/$GH_USER/auth-service:${GIT_COMMIT} ./backend/auth-service'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT} ./backend/auth-service'
             }
         }
         stage('Unit test') {
@@ -37,7 +38,7 @@ pipeline {
         stage('push image') {
             steps {
                 echo 'Pushing image to GHCR...'
-                sh 'docker push ghcr.io/$GH_USER/auth-service:${GIT_COMMIT}'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT}'
             }
         }
     }
