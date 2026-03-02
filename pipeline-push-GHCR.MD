@@ -120,8 +120,7 @@ delete:packages se vuoi cancellare immagini(dopo implementero un metodo per canc
 6. Nel campo **ID**, inserisci `GHCR_TOKEN` (deve corrispondere a quello usato nel Jenkinsfile).
 7. Salva.
 
-Ora la pipeline userà il token tramite la variabile `CR_PAT` per autenticarsi su GHCR.
-
+Ora la pipeline userà il token tramite la variabile `CR_PAT` dentro environment per autenticarsi su GHCR.
 
 
 <!-- fonti: -->
