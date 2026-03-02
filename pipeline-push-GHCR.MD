@@ -123,6 +123,19 @@ delete:packages se vuoi cancellare immagini(dopo implementero un metodo per canc
 Ora la pipeline userà il token tramite la variabile `CR_PAT` dentro environment per autenticarsi su GHCR.
 
 
+## Sicurezza: agenti effimeri (Docker o EC2)
+
+Quando usi `docker login` in una pipeline Jenkins, le credenziali vengono salvate in chiaro nel file `/var/jenkins_home/.docker/config.json` dell'agente Jenkins. Per ridurre i rischi:
+
+- **Usa agenti Docker effimeri**: container che vengono creati per ogni build e distrutti subito dopo. Così nessuna credenziale resta salvata dopo la build.
+- **Anche agenti EC2 effimeri** (come EC2 Spot o agenti che si autodistruggono dopo la build) sono una buona soluzione: l'importante è che l'ambiente venga eliminato dopo l'esecuzione.
+- Se usi agenti persistenti, limita l'accesso a `/var/jenkins_home` e ruota spesso i token.
+
+In sintesi: agenti effimeri (Docker o EC2) sono la best practice per pipeline sicure, perché eliminano ogni traccia delle credenziali dopo la build.
+
+---
+
+
 <!-- fonti: -->
 <!-- https://www.youtube.com/watch?v=HTou7pGnS0Y -->
 <!-- https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry -->
