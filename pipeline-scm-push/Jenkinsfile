@@ -41,13 +41,6 @@ pipeline {
                 sh 'docker push ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT}'
             }
         }
-        stage('Continuous Deployment') {
-            steps {
-                echo 'CD...'
-                sh 'SHA=${GIT_COMMIT} docker compose -f docker-compose-prod.yml pull'
-                sh 'SHA=${GIT_COMMIT} docker compose -f docker-compose-prod.yml up -d'
-            }
-        }
     }
     post {
         always {
