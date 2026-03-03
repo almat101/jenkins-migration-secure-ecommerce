@@ -1,4 +1,5 @@
 # Migrazione e Espansione Pipeline CI/CD: Da GitHub Actions a Jenkins
+
 # Indice
 
 - [Cosa è Jenkins](#cosa-è-jenkins)
