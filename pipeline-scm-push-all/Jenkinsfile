@@ -71,11 +71,6 @@ pipeline {
                 sh 'docker push ghcr.io/$GH_USER/jenkins-migration-frontend:${GIT_COMMIT}'
             }
         }
-        stage('ls') {
-            steps {
-                sh 'rm -rf .env.prod'
-            }
-        }
         stage('Prepare .env') {
             steps {
                 withCredentials([file(credentialsId: 'env-file-prod', variable: 'ENV_FILE')]) {
@@ -83,12 +78,6 @@ pipeline {
                 }
             }
         }
-        stage('ls') {
-            steps {
-                sh 'ls -l'
-            }
-        }
-
         stage('Continuous Deployment') {
             steps {
                 echo 'CD...'
