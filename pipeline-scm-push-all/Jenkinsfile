@@ -86,7 +86,6 @@ pipeline {
         stage('ls') {
             steps {
                 sh 'ls -l'
-                sh 'cat .env.prod'
             }
         }
 

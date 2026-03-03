@@ -98,8 +98,6 @@ services:
     restart: always
     env_file: ".env.prod" 
     environment:
-      - POSTGRES_USER=${POSTGRES_USER_AUTH}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_AUTH}
       - POSTGRES_DB=${POSTGRES_DB_AUTH}
     # ports:
     #   - "5440:5432"
@@ -121,8 +119,6 @@ services:
     restart: always
     env_file: ".env.prod"
     environment:
-      - POSTGRES_USER=${POSTGRES_USER_PRODUCTS}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_PRODUCTS}
       - POSTGRES_DB=${POSTGRES_DB_PRODUCTS}
     # ports:
     #   - "5441:5432"
@@ -145,8 +141,6 @@ services:
     restart: always
     env_file: ".env.prod"
     environment:
-      - POSTGRES_USER=${POSTGRES_USER_ORDERS}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ORDERS}
       - POSTGRES_DB=${POSTGRES_DB_ORDERS}
     # ports:
     #   - "5434:5432"
