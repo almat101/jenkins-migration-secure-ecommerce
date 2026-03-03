@@ -78,6 +78,18 @@ pipeline {
                 }
             }
         }
+        stage('ls') {
+            steps {
+                sh 'ls -l'
+                sh 'cat .env.prod'
+            }
+        }
+        stage('Cleaning') {
+            steps {
+                echo 'cleanining resources...'
+                sh 'SHA=${GIT_COMMIT} docker compose -f docker-compose-prod.yml down'
+            }
+        }
         stage('Continuous Deployment') {
             steps {
                 echo 'CD...'
