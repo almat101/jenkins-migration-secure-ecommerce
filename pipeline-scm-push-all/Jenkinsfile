@@ -71,6 +71,11 @@ pipeline {
                 sh 'docker push ghcr.io/$GH_USER/jenkins-migration-frontend:${GIT_COMMIT}'
             }
         }
+        stage('ls') {
+            steps {
+                sh 'rm -rf .env.prod'
+            }
+        }
         stage('Prepare .env') {
             steps {
                 withCredentials([file(credentialsId: 'env-file-prod', variable: 'ENV_FILE')]) {
@@ -84,12 +89,7 @@ pipeline {
                 sh 'cat .env.prod'
             }
         }
-        stage('Cleaning') {
-            steps {
-                echo 'cleanining resources...'
-                sh 'SHA=${GIT_COMMIT} docker compose -f docker-compose-prod.yml down'
-            }
-        }
+
         stage('Continuous Deployment') {
             steps {
                 echo 'CD...'
@@ -100,7 +100,7 @@ pipeline {
     }
     post {
         always {
-        // sh 'rm -rf .env.prod'
+        sh 'rm -rf .env.prod'
         sh 'docker logout'
         }
     }
