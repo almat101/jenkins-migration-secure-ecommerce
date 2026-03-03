@@ -1,4 +1,3 @@
-
 ## Pipeline SCM con build e push su GHCR
 
 Questa pipeline esegue le seguenti fasi:

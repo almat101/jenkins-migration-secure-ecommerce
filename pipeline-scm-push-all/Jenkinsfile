@@ -1,0 +1,80 @@
+pipeline {
+    agent any
+    environment {
+        CR_PAT = credentials('GHCR_TOKEN')
+        GH_USER = 'almat101'
+    }
+    stages {
+        stage('build auth-service') {
+            steps {
+                echo 'Building auth-service with tag(sha)...'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT} ./backend/auth-service'
+            }
+        }
+        stage('build products-service') {
+            steps {
+                echo 'Building products-service with tag(sha)...'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-products-service:${GIT_COMMIT} ./backend/products-service'
+            }
+        }
+        stage('build orders-service') {
+            steps {
+                echo 'Building orders-service with tag(sha)...'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-orders-service:${GIT_COMMIT} ./backend/orders-service'
+            }
+        }
+        stage('build frontend') {
+            steps {
+                echo 'Building frontend with tag(sha)...'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-frontend:${GIT_COMMIT} ./frontend'
+            }
+        }
+        stage('Unit test auth-service') {
+            steps {
+                echo 'Running unit test for auth-sevice...'
+                sh 'make auth-unit'
+            }
+        }
+        stage('integration test auth-service') {
+            steps {
+                echo 'Running integration test for auth-service...'
+                sh 'make auth-integration'
+            }
+        }
+        stage('login to GHCR') {
+            steps {
+                echo 'Logging in GHCR...'
+                sh 'echo $CR_PAT | docker login ghcr.io -u $GH_USER --password-stdin'
+            }
+        }
+        stage('push auth-service') {
+            steps {
+                echo 'Pushing auth-service to GHCR...'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT}'
+            }
+        }
+        stage('push products-service') {
+            steps {
+                echo 'Pushing products-service to GHCR...'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-products-service:${GIT_COMMIT}'
+            }
+        }
+        stage('push orders-service') {
+            steps {
+                echo 'Pushing orders-service to GHCR...'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-orders-service:${GIT_COMMIT}'
+            }
+        }
+        stage('push frontend') {
+            steps {
+                echo 'Pushing frontend to GHCR...'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-frontend:${GIT_COMMIT}'
+            }
+        }
+    }
+    post {
+        always {
+        sh 'docker logout'
+        }
+    }
+}

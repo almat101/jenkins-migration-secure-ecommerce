@@ -1,10 +1,11 @@
 services:
 
   frontend:
-    build: 
-      context: ./frontend/
-      dockerfile: Dockerfile
-    container_name: frontend-secure
+    image: ghcr.io/almat101/jenkins-migration-frontend:${SHA}
+    # build: 
+    #   context: ./frontend/
+    #   dockerfile: Dockerfile
+    container_name: jenkins-migration-frontend
     env_file: ".env"
     # ports:
     #   - 8082:80
@@ -30,7 +31,7 @@ services:
     # build: 
     #   context: ./backend/auth-service
     #   dockerfile: Dockerfile
-    container_name: auth-service-secure
+    container_name: jenkins-migration-auth-service
     env_file: ".env"
     # ports:
     #   - 4030:3030
@@ -48,10 +49,11 @@ services:
       - web_net
 
   products-service:
-    build: 
-      context: ./backend/products-service
-      dockerfile: Dockerfile
-    container_name: products-service-secure
+    image: ghcr.io/almat101/jenkins-migration-products-service:${SHA}
+    # build: 
+    #   context: ./backend/products-service
+    #   dockerfile: Dockerfile
+    container_name: jenkins-migration-products-service
     env_file: ".env"
     # ports:
     #   - 4020:3020
@@ -69,10 +71,11 @@ services:
       - web_net
 
   orders-service:
-    build: 
-      context: ./backend/orders-service
-      dockerfile: Dockerfile
-    container_name: orders-service-secure
+    image: ghcr.io/almat101/jenkins-migration-orders-service:${SHA}
+    # build: 
+    #   context: ./backend/orders-service
+    #   dockerfile: Dockerfile
+    container_name: jenkins-migration-orders-service
     env_file: ".env"
     # ports:
     #   - 4040:3040
@@ -91,7 +94,7 @@ services:
 
   db_auth:
     image: postgres:17-alpine3.22
-    container_name: db_auth-secure
+    container_name: jenkins-migration-db_auth
     restart: always
     env_file: ".env" 
     environment:
@@ -114,7 +117,7 @@ services:
 
   db_products:
     image: postgres:17-alpine3.22
-    container_name: db_products-secure
+    container_name: jenkins-migration-db_products
     restart: always
     env_file: ".env"
     environment:
@@ -138,7 +141,7 @@ services:
 
   db_orders:
     image: postgres:17-alpine3.22
-    container_name: db_orders-secure
+    container_name: jenkins-migration-db_orders
     restart: always
     env_file: ".env"
     environment:
