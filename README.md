@@ -1,5 +1,11 @@
 # Migrazione e Espansione Pipeline CI/CD: Da GitHub Actions a Jenkins
 
+## Roadmap futura
+Quando migrerò a una soluzione più sicura e scalabile, userò Jenkins come controller (senza Docker installato) e agenti esterni (container o agenti ec2) Gli agenti EC2 eseguiranno le fasi di build, test e deploy, eliminando la necessità di DOoD o DinD sul controller Jenkins.
+Inizialmente la pipeline verrà creata e testata su questa VPS (ambiente di test/home lab) con Jenkins installato e il volume del socket Docker montato, sia tramite interfaccia web che Jenkinsfile.
+
+Quando la pipeline sarà funzionante, il mounting del volume Docker verrà commentato o rimosso e la pipeline verrà migrata su agenti EC2 esterni, sfruttando anche eventuali plugin per la gestione automatica degli agenti. Questo approccio permette di partire in modo semplice e poi evolvere verso una soluzione più sicura e scalabile.
+
 # Indice
 
 - [Cosa è Jenkins](#cosa-è-jenkins)
@@ -23,11 +29,12 @@ Questo progetto nasce con l'obiettivo di migrare e ampliare la pipeline CI/CD pr
 - Push delle immagini su un registro Docker
 - Deploy tramite pull delle immagini nel docker-compose
 
-## Cosa è jenkins 
-Jenkins è un software open source per l'automazione di processi di integrazione e distribuzione continua (CI/CD). Permette di gestire pipeline di build, test e deploy in modo automatizzato, integrandosi con numerosi strumenti di sviluppo, versionamento e infrastruttura. Grazie alla sua architettura a plugin, Jenkins è altamente personalizzabile e supporta una vasta gamma di linguaggi, ambienti e workflow DevOps.
 
-## A cosa serve 
-Jenkins serve principalmente per automatizzare il ciclo di vita del software: dal checkout del codice sorgente, alla compilazione, esecuzione dei test, creazione di artefatti, fino al deploy su ambienti di produzione o test. Consente di ridurre errori manuali, velocizzare i rilasci, garantire qualità e tracciabilità delle modifiche, integrandosi facilmente con repository Git, Docker, cloud, strumenti di notifica e molto altro.
+## Cos'è Jenkins e a cosa serve
+
+Jenkins è un software open source per l'automazione dei processi di integrazione e distribuzione continua (CI/CD). Permette di gestire pipeline di build, test e deploy in modo automatizzato, integrandosi con numerosi strumenti di sviluppo, versionamento e infrastruttura (come Git, Docker, cloud, notifiche, ecc.).
+
+Grazie alla sua architettura a plugin, Jenkins è altamente personalizzabile e supporta una vasta gamma di linguaggi, ambienti e workflow DevOps. Il suo scopo principale è automatizzare il ciclo di vita del software: dal checkout del codice sorgente, alla compilazione, esecuzione dei test, creazione di artefatti, fino al deploy su ambienti di produzione o test. Questo consente di ridurre errori manuali, velocizzare i rilasci, garantire qualità e tracciabilità delle modifiche.
 
 
 ## Jenkins controller (master) e agenti (worker)
@@ -38,15 +45,18 @@ In Jenkins, l'architettura classica prevede un **controller** (precedentemente c
 
 La terminologia moderna preferisce "controller" e "agent" (o "worker") invece di "master/slave" per motivi di inclusività. In pratica, il controller decide dove e come eseguire i job, mentre gli agenti sono gli esecutori reali delle pipeline.
 
-## Dockerfile di Jenkins: Permessi, Gruppi e Sicurezza Utente
 
-Per poter utilizzare Docker all'interno del container Jenkins, è stato necessario installare Docker seguendo la procedura ufficiale di installazione (come da documentazione Docker). Questo garantisce che il demone Docker sia disponibile e funzionante nel container, permettendo a Jenkins di eseguire build e gestire i container direttamente dai job. Solo dopo questa installazione è possibile scegliere tra le modalità DOoD e DinD per l'integrazione tra Jenkins e Docker.
+## Integrazione Docker/Jenkins in container
+Per gestire le pipeline CI/CD in modo flessibile e sicuro, Jenkins viene eseguito in un container custom su VPS Hetzner. In questo scenario, Jenkins controlla direttamente l'applicazione tramite Docker e Docker Compose, grazie al mounting del volume `/var/run/docker.sock` nel container Jenkins. Questo permette a Jenkins di interagire con il demone Docker della macchina host (VPS o PC locale) e orchestrare tutte le operazioni necessarie per la pipeline.
 
-Nel Dockerfile di Jenkins è stato poi necessario modificare i permessi del gruppo Docker (GID) e aggiungere l'utente Jenkins al gruppo Docker. Questo passaggio è fondamentale per permettere a Jenkins di utilizzare Docker senza problemi di permessi, ad esempio per eseguire build e gestire container direttamente dal job.
+## Dockerfile di Jenkins: Permessi e Sicurezza
+Nel Dockerfile custom di Jenkins sono stati adottati alcuni accorgimenti fondamentali:
 
-Per garantire la sicurezza, dopo aver installato tutti i pacchetti necessari e configurato Docker, il container viene eseguito con l'utente `jenkins` (non root). Questo segue il principio del minimo privilegio: Jenkins può accedere a Docker, ma non ha permessi amministrativi sul sistema, riducendo i rischi in caso di compromissione del servizio.
+- **Installazione di Docker nel container Jenkins**: Segue la procedura ufficiale per garantire che il demone Docker sia disponibile e funzionante nel container. Solo così Jenkins può eseguire build e gestire container direttamente dai job.
+- **Modifica dei permessi del gruppo Docker (GID)** e aggiunta dell'utente Jenkins al gruppo Docker: Questo permette a Jenkins di utilizzare Docker senza problemi di permessi.
+- **Esecuzione con utente non root**: Dopo aver installato e configurato Docker, il container viene eseguito con l'utente `jenkins` (non root), seguendo il principio del minimo privilegio. Jenkins può accedere a Docker, ma non ha permessi amministrativi sul sistema, riducendo i rischi in caso di compromissione.
 
-Se si prova ad accedere al container Jenkins per installare manualmente nuovi pacchetti, l'operazione non funziona perché l'utente di default è `jenkins` e non ha privilegi amministrativi. In questi casi, per operazioni di manutenzione straordinaria, è necessario accedere come root:
+> Se si devono installare manualmente nuovi pacchetti nel container Jenkins, l'operazione non funziona perché l'utente di default è `jenkins` e non ha privilegi amministrativi. In questi casi, per manutenzione straordinaria, è necessario accedere come root:
 
 [Dockerfile custom di Jenkins](https://github.com/almat101/jenkins-migration-secure-ecommerce/blob/main/jenkins/Dockerfile)
 
@@ -68,17 +78,6 @@ Sto usando DOoD (Jenkins + Docker) per la pipeline su VPS, ideale per test e svi
 - **DinD (Docker-in-Docker):** Jenkins comunica con un demone Docker separato, avviato in un container dedicato (spesso tramite API e TLS). Offre maggiore isolamento e sicurezza, consigliato per ambienti di produzione.
 
 Attualmente uso DOoD per semplicità, ma in futuro migrerò verso agenti EC2 per maggiore sicurezza.
-
-## Roadmap futura
-Quando migrerò a una soluzione più sicura e scalabile, userò Jenkins come controller (senza Docker installato) e agenti EC2 esterni con Docker/Docker Compose installati. Gli agenti EC2 eseguiranno le fasi di build, test e deploy, eliminando la necessità di DOoD o DinD sul controller Jenkins.
-Inizialmente la pipeline verrà creata e testata su questa VPS (ambiente di test/home lab) con Jenkins installato e il volume del socket Docker montato, sia tramite interfaccia web che Jenkinsfile.
-
-Quando la pipeline sarà funzionante, il mounting del volume Docker verrà commentato o rimosso e la pipeline verrà migrata su agenti EC2 esterni, sfruttando anche eventuali plugin per la gestione automatica degli agenti. Questo approccio permette di partire in modo semplice e poi evolvere verso una soluzione più sicura e scalabile.
-
-## Note sull'integrazione Docker/Jenkins in container
-Per garantire la massima flessibilità e sicurezza, i test sono stati effettuati utilizzando un container custom di Jenkins su una VPS Hetzner. In questo container, oltre a Jenkins, è stato installato Docker seguendo la procedura ufficiale. Questo consente a Jenkins di controllare direttamente l'applicazione tramite Docker e Docker Compose.
-
-La chiave di questa integrazione è il mounting del volume `/var/run/docker.sock` nel container Jenkins, che permette a Jenkins di interagire con il demone Docker della macchina host (VPS o PC locale). In questo modo, Jenkins può gestire i container e orchestrare le operazioni necessarie per la pipeline.
 
 ## Separazione dei Makefile: Applicazione vs Infrastruttura
 È stata effettuata una separazione tra il Makefile classico, dedicato all'applicazione, e un Makefile specifico per l'infrastruttura. Quest'ultimo si occupa di avviare Jenkins e il tunnel Cloudflare.
