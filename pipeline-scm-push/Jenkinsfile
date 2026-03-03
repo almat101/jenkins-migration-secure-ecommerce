@@ -44,6 +44,7 @@ pipeline {
     }
     post {
         always {
+        sh 'rm -rf .env'
         sh 'docker logout'
         }
     }
