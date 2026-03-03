@@ -11,7 +11,9 @@
 - [Separazione dei Makefile: Applicazione vs Infrastruttura](#separazione-dei-makefile-applicazione-vs-infrastruttura)
 - [Prima installazione di Jenkins: password e utente admin](#prima-installazione-di-jenkins-password-e-utente-admin)
 - [Accesso Sicuro tramite Cloudflare Tunnel](#accesso-sicuro-tramite-cloudflare-tunnel)
-- [Pipeline Jenkins: guida completa](pipeline-example.md)
+- [Pipeline Jenkins: pipeline semplice](pipeline-example.md)
+- [Pipeline jenkins: pipeline scm + collegamento ssh git e trigger su branch main](pipeline-scm.md)
+- [Pipeline jenkins: pipeline scm con push su registro ghcr](pipeline-push-GHCR.md)
 
 Questo progetto nasce con l'obiettivo di migrare e ampliare la pipeline CI/CD precedentemente gestita tramite GitHub Actions, portandola su Jenkins. L'infrastruttura è stata pensata per testare e implementare pipeline sempre più complesse, partendo da semplici test tramite l'interfaccia web di Jenkins, fino ad arrivare alla creazione di pipeline avanzate tramite Jenkinsfile. La pipeline finale prevede le seguenti fasi:
 - Checkout del codice

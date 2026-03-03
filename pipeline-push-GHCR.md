@@ -102,7 +102,7 @@ delete:packages se vuoi cancellare immagini(dopo implementero un metodo per canc
      - Per GHCR servono almeno:
          - `write:packages`
          - `read:packages`
-         - `delete:packages` (se vuoi cancellare immagini; in futuro potrai implementare la cancellazione automatica dopo 5 immagini)
+         - `delete:packages`(in futuro potrai implementare la cancellazione automatica dopo 5 immagini)
      - Se vuoi fare push su repository private, aggiungi anche `repo`.
 7. Imposta la durata del token (consigliato: "No expiration" solo se necessario).
 8. Clicca su **Generate token** e copia subito il token (non sarà più visibile dopo).
@@ -121,16 +121,14 @@ delete:packages se vuoi cancellare immagini(dopo implementero un metodo per canc
 
 Ora la pipeline userà il token tramite la variabile `CR_PAT` dentro environment per autenticarsi su GHCR.
 
+## Sicurezza credenziali Docker in pipeline Jenkins
 
-## Sicurezza: agenti effimeri (Docker o EC2)
+Quando usi `docker login` in una pipeline Jenkins, le credenziali vengono salvate in chiaro nel file `/var/jenkins_home/.docker/config.json` dell'agente Jenkins (controller o worker). Se usi `agent any` o esegui la pipeline direttamente sul controller Jenkins, questo file rimane sul disco dopo la build. Per ridurre i rischi:
 
-Quando usi `docker login` in una pipeline Jenkins, le credenziali vengono salvate in chiaro nel file `/var/jenkins_home/.docker/config.json` dell'agente Jenkins. Per ridurre i rischi:
-
-- **Usa agenti Docker effimeri**: container che vengono creati per ogni build e distrutti subito dopo. Così nessuna credenziale resta salvata dopo la build.
-- **Anche agenti EC2 effimeri** (come EC2 Spot o agenti che si autodistruggono dopo la build) sono una buona soluzione: l'importante è che l'ambiente venga eliminato dopo l'esecuzione.
+- Usa agenti Docker effimeri (container creati e distrutti per ogni build) o agenti EC2 effimeri, così nessuna credenziale resta salvata dopo la build.
 - Se usi agenti persistenti, limita l'accesso a `/var/jenkins_home` e ruota spesso i token.
 
-In sintesi: agenti effimeri (Docker o EC2) sono la best practice per pipeline sicure, perché eliminano ogni traccia delle credenziali dopo la build.
+In sintesi: agenti effimeri sono la best practice per pipeline sicure, perché eliminano ogni traccia delle credenziali dopo la build.
 
 ---
 
