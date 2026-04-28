@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Running auth-test') { 
             steps { 
-                sh 'make auth-test' 
+                sh 'make auth-unit' 
             }
         }
     }
