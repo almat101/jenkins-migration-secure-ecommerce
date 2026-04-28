@@ -7,12 +7,6 @@ pipeline {
                 sh 'make auth-unit'
             }
         }
-        stage('build') {
-            steps {
-                echo 'Building application...'
-                sh 'make build'
-            }
-        }
         stage('integration test') {
             steps {
                 echo 'Running integration test...'

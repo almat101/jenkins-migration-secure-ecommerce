@@ -1,15 +1,38 @@
 pipeline {
     agent any
-    
-    stages {
-        // Rimosso perché la pipeline viene collegata tramite interfaccia web all'inizio con 'Pipeline from SCM' 
-        // Prima creerò una pipeline tramite l'interfaccia web e la collegherò via SSH. Successivamente passerò all'utilizzo della pipeline "Pipeline from SCM", che collegherò allo stesso modo. Aver fatto prima la configurazione manuale renderà più semplice il passaggio.
-        //     steps {
-        //         echo 'Checking out code...'
-        //         git branch: 'main', url: 'https://github.com/almat101/jenkins-migration-secure-ecommerce.git'
-        //     }
-        // }
+    environment {
+        CR_PAT = credentials('GHCR_TOKEN')
+        GH_USER = 'almat101'
+    }
+    stages {        
+        stage('build all') {
+            docker {
+                image 'docker:24.0.7-cli'
+                args '-v /var/run/docker.sock:/var/run/docker.sock'
+            }
+            steps {
+                checkout scm
+                echo 'Building all images(with tag)...'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT} ./backend/auth-service'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-products-service:${GIT_COMMIT} ./backend/products-service'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-orders-service:${GIT_COMMIT} ./backend/orders-service'
+                sh 'docker build -t ghcr.io/$GH_USER/jenkins-migration-frontend:${GIT_COMMIT} ./frontend'
+
+            }
+        }
         
+        stage('integration test') {
+            agent {
+                docker { image 'node:24-alpine' }
+            }
+            steps {
+                echo 'Checkout in every agent...'
+                checkout scm
+                echo 'Running integration test...'
+                sh 'cd backend/auth-service && npm install && npm run test:integration'
+            }
+        }
+
         stage('Unit test') {
             agent { 
                 docker { image 'node:24-alpine' }
@@ -22,32 +45,42 @@ pipeline {
                 sh 'cd backend/auth-service && npm install && npm run test:unit'
             }
         }
-        
-        stage('build') {
-            agent {
-                docker { image 'docker/compose:alpine-1.29.2' }
-                // docker { image 'docker/compose:debian-1.29.2' }
-            }
+
+        stage('login to GHCR') {
             steps {
-                echo 'Checkout in every agent...'
-                checkout scm
-                echo 'Checking compose version...'
-                sh 'docker compose version'
-                echo 'Building application...'
-                sh 'docker compose build'
+                echo 'Logging in GHCR...'
+                sh 'echo $CR_PAT | docker login ghcr.io -u $GH_USER --password-stdin'
             }
         }
-        
-        stage('integration test') {
-            agent {
-                docker { image 'node:24-alpine' }
+
+        stage('push auth-service') {
+            docker {
+                image 'docker:29-debian13-cli'
+                args '-v /var/run/docker.sock:/var/run/docker.sock'
             }
             steps {
-                echo 'Checkout in every agent...'
                 checkout scm
-                echo 'Running integration test...'
-                sh 'cd backend/auth-service && npm install && npm run test:unit'
+                echo 'Pushing auth-service to GHCR...'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-auth-service:${GIT_COMMIT}'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-products-service:${GIT_COMMIT}'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-orders-service:${GIT_COMMIT}'
+                sh 'docker push ghcr.io/$GH_USER/jenkins-migration-frontend:${GIT_COMMIT}'
             }
         }
     }
 }
+
+    //    stage('build') {
+    //         agent {
+    //             docker { image 'docker/compose:alpine-1.29.2' }
+    //             // docker { image 'docker/compose:debian-1.29.2' }
+    //         }
+    //         steps {
+    //             echo 'Checkout in every agent...'
+    //             checkout scm
+    //             echo 'Checking compose version...'
+    //             sh 'docker compose version'
+    //             echo 'Building application...'
+    //             sh 'docker compose build'
+    //         }
+    //     }

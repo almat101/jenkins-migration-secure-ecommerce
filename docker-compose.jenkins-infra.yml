@@ -19,11 +19,12 @@ services:
     restart: always
 
   cloudflared:
+    env_file: ".env"
     image: cloudflare/cloudflared:latest
-    container_name: cloudflared-crud
+    container_name: cloudflared-infra
     networks:
       - web_net
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run --token ${CFTI}
     restart: always
 
 volumes:
@@ -31,4 +32,10 @@ volumes:
 
 networks:
   web_net:
-    external: true # Necessita di creazione con 'docker network create web_net'
+    external: true 
+
+# steps and commands for first run:
+# Run 'docker network create web_net' to create the network
+# Start compose with 'docker compose -f docker-compose.jenkins-infra.yml up -d --build'
+
+  

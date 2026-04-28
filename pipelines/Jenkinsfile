@@ -1,0 +1,11 @@
+pipeline { 
+    agent any 
+
+    stages {
+        stage('Running auth-test') { 
+            steps { 
+                sh 'make auth-test' 
+            }
+        }
+    }
+}
